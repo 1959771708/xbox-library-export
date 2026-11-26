@@ -1,0 +1,12 @@
+{
+  "name": "xbox-library-export",
+  "version": "1.2.0",
+  "private": true,
+  "description": "导出 Xbox / 微软商店账号的完整游戏库存与游玩时长（含未游玩已购游戏、Play Anywhere 与金会员），输出 JSON 供第三方工具导入",
+  "scripts": {
+    "test": "node tools/selftest.cjs",
+    "verify": "node --check xbox-library-export.user.js && node tools/selftest.cjs"
+  },
+  "license": "CC-BY-4.0",
+  "author": "1959771708"
+}

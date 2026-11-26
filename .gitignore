@@ -1,0 +1,9 @@
+# 本地导出产物（含账号信息，不要提交）
+xbox-library-*.json
+xbox-library-*.csv
+*.local.*
+
+.scratch/
+node_modules/
+.DS_Store
+Thumbs.db
