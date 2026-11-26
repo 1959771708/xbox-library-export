@@ -24,12 +24,9 @@
 通过同源静默 PKCE iframe（`/auth/msa/blank.html`）或自动弹窗获取微软与 Xbox Live 令牌（**全程免填授权码**），依次调用官方 Collections、DisplayCatalog 与 TitleHub 接口：
 
 - 账号身份（`xuid` / `gamertag` / `market`）
-- 完整已购与金会员游戏库（`collections.mp.microsoft.com`）：游戏英文名（统一使用 `languages=en-us,neutral`）、`productId`、`titleId`、`packageFamilyName`、`ownershipType`（`owned` / `gold` / `played_only`）、`isPlayAnywhere`、`isGold`、入库时间 `acquiredAt`、可用平台 `platforms`
+- 完整已购与金会员游戏库（`collections.mp.microsoft.com`）：游戏英文名（统一使用 `languages=en-us,neutral`）、`productId`、`titleId`、`packageFamilyName`、`ownershipType`（`owned` / `gold`）、`isPlayAnywhere`、`isGold`、入库时间 `acquiredAt`、可用平台 `platforms`
 - **CN 人民币 / US 美元补全估值**：默认以 `CN` 市场查询国区人民币定价（`priceCents` / `currency: "CNY"`），国区缺失条目自动回退 `US` 市场补全名目与价格
-- **游玩时长**：通过 Xbox Live TitleHub 批量拉取 `playtimeMinutes` 与最后游玩时间 `lastPlayedAt`
-- **可选「含未买断仅玩过（XGP/光盘）」开关**：
-  - 面板提供 **「含未买断仅玩过（XGP/光盘）」** 复选框（默认关闭，仅导买断与金会员库存）；
-  - 勾选后会把通过 XGP 或实体光盘玩过但未买断的游戏一并纳入，并标注 `ownershipType: "played_only"`。
+- **游玩时长**：通过 Xbox Live TitleHub 批量拉取已购游戏的 `playtimeMinutes` 与最后游玩时间 `lastPlayedAt`（不包含仅通过 XGP / 光盘玩过但未买断的记录）
 
 **自动过滤**：DLC / 扩展包 / 内购货币等非本体项目，并在 `summary` 中记录排除数量（`excludedExtras`）。
 
@@ -41,7 +38,6 @@
 2. 点上面的[一键安装](#一键安装)链接；手动安装可新建脚本并将 [xbox-library-export.user.js](xbox-library-export.user.js) 粘贴保存。
 3. 打开 <https://www.xbox.com/> 并登录你的微软/Xbox 账号。
 4. 点右下角绿色按钮 **「Xbox 库存导出」**：
-   - 如需一并导出仅通过 XGP / 光盘玩过但未买断的游戏，先勾选 **「含未买断仅玩过（XGP/光盘）」**；
    - 点击 **「开始导出」**（若浏览器拦截第三方 Cookie，会自动弹出微软登录窗，登录后自动关闭并继续导出）；
    - 完成后点击 **「下载 JSON」**，保存 `xbox-library-*.json`。
 5. 若遇到授权或网络问题，点面板上的 **「环境自检」** 查看分步诊断结果。
@@ -64,8 +60,6 @@
     "gameCount": 6,
     "ownedGamesCount": 6,
     "goldGamesCount": 0,
-    "playedOnlyAdded": 0,
-    "includePlayedOnly": false,
     "collectionItemsCount": 39,
     "excludedExtras": 0,
     "unresolvedCount": 0,

@@ -2,7 +2,7 @@
 // @name         Xbox 库存导出
 // @name:en      Xbox Library Export
 // @namespace    https://github.com/1959771708/xbox-library-export
-// @version      1.2.0
+// @version      1.2.1
 // @description  导出 Xbox / 微软商店账号的完整游戏库存与游玩时长（免填授权码、统一英文名与 CN 人民币定价，含未游玩已购游戏、Play Anywhere 与金会员）
 // @description:en  Export your complete Xbox / Microsoft Store owned library and playtime to JSON without manual device codes.
 // @author       1959771708
@@ -47,7 +47,6 @@
     const RP_MARKETPLACE = 'http://mp.microsoft.com/';
 
     const REFRESH_TOKEN_KEY = 'xbox_export_refresh_token_v1';
-    const INCLUDE_PLAYED_ONLY_KEY = 'xbox_export_include_played_only';
     const PRIMARY_MARKET = 'CN';
     const FALLBACK_MARKET = 'US';
 
@@ -67,8 +66,7 @@
         result: null,
         startedAt: 0,
         requests: 0,
-        ticker: null,
-        includePlayedOnly: loadBoolPref(INCLUDE_PLAYED_ONLY_KEY, false)
+        ticker: null
     };
 
     // ── 本地偏好与工具 ──────────────────────────────────────────────────────
@@ -776,10 +774,7 @@
     }
 
     // ── 主导出流程 ──────────────────────────────────────────────────────────
-    async function runExport(options) {
-        const opts = options || {};
-        const includePlayedOnly = opts.includePlayedOnly !== undefined
-            ? !!opts.includePlayedOnly : !!state.includePlayedOnly;
+    async function runExport() {
         const market = PRIMARY_MARKET;
 
         state.cancelled = false;
@@ -964,39 +959,6 @@
             games.push(entry);
         });
 
-        let playedOnlyAdded = 0;
-        if (includePlayedOnly) {
-            for (let i = 0; i < playedTitles.length; i += 1) {
-                const t = playedTitles[i];
-                if (!t) continue;
-                const tid = t.titleId ? String(t.titleId) : null;
-                const pfn = t.pfn ? String(t.pfn) : null;
-                const info = (pfn && playedByPfn.get(pfn.toLowerCase())) || (t.name && playedByTitleKey.get(normalizeTitleKey(t.name)));
-                if (info && info.matched) continue;
-                const cleanName = cleanDisplayTitle(t.name || '');
-                const tk = normalizeTitleKey(cleanName);
-                if (!cleanName || (tk && seenTitleKeys.has(tk))) continue;
-                if (tk) seenTitleKeys.add(tk);
-                playedOnlyAdded += 1;
-
-                const entry = {
-                    name: cleanName,
-                    productId: null,
-                    packageFamilyName: pfn,
-                    titleId: tid,
-                    platforms: mapTitleDevices(t.devices),
-                    isPlayAnywhere: false,
-                    isGold: false,
-                    ownershipType: 'played_only',
-                    acquiredAt: null,
-                    resolved: true
-                };
-                if (info && typeof info.playtimeMinutes === 'number') entry.playtimeMinutes = info.playtimeMinutes;
-                if (info && info.lastPlayedAt) entry.lastPlayedAt = info.lastPlayedAt;
-                games.push(entry);
-            }
-        }
-
         games.sort(function (a, b) {
             return String(a.name).localeCompare(String(b.name), 'zh-Hans-CN');
         });
@@ -1023,8 +985,6 @@
                 gameCount: games.length,
                 ownedGamesCount: ownedCount,
                 goldGamesCount: goldCount,
-                playedOnlyAdded: playedOnlyAdded,
-                includePlayedOnly: includePlayedOnly,
                 usFallbackCount: usFallbackCount,
                 collectionItemsCount: rawCollection.length,
                 excludedExtras: excludedExtras,
@@ -1078,7 +1038,7 @@
 
     // ── 界面 ────────────────────────────────────────────────────────────────
     const ui = (function () {
-        let root, panel, statusEl, elapsedEl, barEl, logEl, btnRun, btnJson, btnReset, chkPlayed;
+        let root, panel, statusEl, elapsedEl, barEl, logEl, btnRun, btnJson, btnReset;
 
         function inject() {
             root = document.createElement('div');
@@ -1122,7 +1082,6 @@
                 + '<div id="xbox-export-panel">'
                 + '  <h3>Xbox 库存导出</h3>'
                 + '  <div class="sub">免填授权码：自动复用已登录微软会话，导出完整已购库与游玩时长（统一英文名，优先带 CN 人民币定价）。</div>'
-                + '  <label class="xbox-opt-row"><input type="checkbox" id="xbox-export-played-only" /><span>含未买断仅玩过（XGP / 光盘）</span></label>'
                 + '  <div id="xbox-export-statusrow">'
                 + '    <div id="xbox-export-status">就绪</div>'
                 + '    <div id="xbox-export-elapsed"></div>'
@@ -1144,15 +1103,6 @@
             btnRun = root.querySelector('#xbox-export-run');
             btnJson = root.querySelector('#xbox-export-json');
             btnReset = root.querySelector('#xbox-export-reset');
-            chkPlayed = root.querySelector('#xbox-export-played-only');
-
-            if (chkPlayed) {
-                chkPlayed.checked = !!state.includePlayedOnly;
-                chkPlayed.addEventListener('change', function () {
-                    state.includePlayedOnly = !!chkPlayed.checked;
-                    saveBoolPref(INCLUDE_PLAYED_ONLY_KEY, state.includePlayedOnly);
-                });
-            }
 
             root.querySelector('#xbox-export-fab').addEventListener('click', function () {
                 panel.style.display = panel.style.display === 'block' ? 'none' : 'block';

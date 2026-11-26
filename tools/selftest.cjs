@@ -169,7 +169,7 @@ async function main() {
         assertEqual(plat.platforms, ['Windows', 'Xbox'], '双平台');
     });
 
-    await runCase('完整导出：已购未玩 + 已购有游玩时长 + XGP 开关切换', async function () {
+    await runCase('完整导出：已购未玩 + 已购有游玩时长 + 排除未买断仅玩过（XGP/光盘）', async function () {
         const ctx = makeSandbox({
             storage: { xbox_export_refresh_token_v1: 'rt_init' },
             onRequest: function (cfg) {
@@ -248,15 +248,9 @@ async function main() {
         const resDefault = await ctx.api.runExport();
         assertEqual(resDefault.account.gamertag, 'XboxPlayer', 'gamertag');
         assertEqual(resDefault.account.market, 'CN', '默认 CN 市场');
-        assertEqual(resDefault.summary.gameCount, 2, '默认仅导已购 2 款');
-        assertEqual(resDefault.summary.playedOnlyAdded, 0, '未含仅游玩');
-        assertEqual(resDefault.summary.totalPlaytimeMinutes, 620, '地平线 5 时长');
+        assertEqual(resDefault.summary.gameCount, 2, '仅导已购 2 款（不含未买断 Palworld）');
+        assertEqual(resDefault.summary.totalPlaytimeMinutes, 620, '仅统计已购游戏时长');
         assertEqual(ctx.storageMap.get('xbox_export_refresh_token_v1'), 'rt_next', 'refresh_token 应更新');
-
-        const resWithXgp = await ctx.api.runExport({ includePlayedOnly: true });
-        assertEqual(resWithXgp.summary.gameCount, 3, '开启开关后应包含 Palworld');
-        assertEqual(resWithXgp.summary.playedOnlyAdded, 1, 'playedOnlyAdded');
-        assertEqual(resWithXgp.summary.totalPlaytimeMinutes, 800, '总时长包含 Palworld');
     });
 
     await runCase('免填授权码：无缓存时通过静默 PKCE iframe 拿 code 换令牌', async function () {
